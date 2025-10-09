@@ -14,7 +14,7 @@ class GreedyRobot:
     def start(self):
         self.fill_matrix()
         while True:
-            self.coins+=self.matrix[self.x][self.y]
+            self.coins += self.matrix[self.x][self.y]
             self.right_or_down()
             if self.is_finish():
                 break
