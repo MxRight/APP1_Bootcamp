@@ -4,9 +4,9 @@ def main():
     return figure_finder(read_file())
 
 
-def read_file(filename='input.txt'):
+def read_file(path='task3/', filename='input.txt'):
     res = []
-    with open(filename, 'r', encoding='utf-8') as input_f:
+    with open(path + filename, 'r', encoding='utf-8') as input_f:
         for line in input_f:
             res.append(list(map(int, line.split())))
     return res
