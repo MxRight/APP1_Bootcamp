@@ -1,12 +1,19 @@
 from math import pow
 
-
-def validation():
+def main():
     num = input()
     len_of_num = len(num)
     error_msg = 'Conversion error!'
     if len_of_num == 0:
         return error_msg
+    result = validation(num)
+    if result[0]:
+        str_integer_lst, numbers_after_point, minus_flag = result[1]
+        return calculation(str_integer_lst, numbers_after_point, minus_flag)
+    else:
+        return error_msg
+
+def validation(num: str):
     is_valid = True
     point_flag = False
     minus_flag = False
@@ -24,7 +31,11 @@ def validation():
             is_valid = False
             break
         elif i == '.' and point_flag == False:
-            point_flag = True
+            if numbers_of_elements > 0:
+                point_flag = True
+            else:
+                is_valid = False
+                break
         elif i in allow_numbers_str:
             str_integer_lst.append(i)
             if point_flag:
@@ -35,10 +46,7 @@ def validation():
         numbers_of_elements += 1
     if point_flag and numbers_after_point == 0:
         is_valid = False
-    if is_valid:
-        return calculation(str_integer_lst, numbers_after_point, minus_flag)
-    else:
-        return error_msg
+    return is_valid, (str_integer_lst, numbers_after_point, minus_flag)
 
 
 def calculation(str_integer_lst, numbers_after_point, minus=False):
@@ -53,5 +61,5 @@ def calculation(str_integer_lst, numbers_after_point, minus=False):
 
 
 if __name__ == "__main__":
-    res = validation()
+    res = main()
     print(res if isinstance(res, str) else f"{res:.3f}")
