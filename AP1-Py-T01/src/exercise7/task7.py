@@ -1,10 +1,7 @@
-class GreedyRobot:
+class DynamicRobot:
     def __init__(self):
-        self.coins = 0
         self.n = 0
         self.m = 0
-        self.x = 0
-        self.y = 0
         self.matrix = None
 
     def fill_matrix(self):
@@ -13,28 +10,18 @@ class GreedyRobot:
 
     def start(self):
         self.fill_matrix()
-        while True:
-            self.coins += self.matrix[self.x][self.y]
-            self.right_or_down()
-            if self.is_finish():
-                break
-        return self.coins
-
-    def right_or_down(self):
-        at_bottom = self.x == self.n - 1
-        at_right = self.y == self.m - 1
-
-        if not at_bottom and (at_right or self.matrix[self.x + 1][self.y] >= self.matrix[self.x][self.y + 1]):
-            self.x += 1
-        elif not at_right:
-            self.y += 1
-
-    def is_finish(self):
-        if self.x == self.n - 1 and self.y == self.m - 1:
-            return True
-        return False
+        dp = [[0] * self.m for _ in range(self.n)]
+        dp[0][0] = self.matrix[0][0]
+        for j in range(1, self.m):
+            dp[0][j] = dp[0][j - 1] + self.matrix[0][j]
+        for i in range(1, self.n):
+            dp[i][0] = dp[i - 1][0] + self.matrix[i][0]
+        for i in range(1, self.n):
+            for j in range(1, self.m):
+                dp[i][j] = self.matrix[i][j] + max(dp[i - 1][j], dp[i][j - 1])
+        return dp[self.n - 1][self.m - 1]
 
 
 if __name__ == "__main__":
-    t800 = GreedyRobot()
+    t800 = DynamicRobot()
     print(t800.start())
