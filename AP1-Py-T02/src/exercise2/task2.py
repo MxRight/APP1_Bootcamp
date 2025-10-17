@@ -1,96 +1,123 @@
-import requests
 import os
 import re
-
-"""
-добавить:
- цикл для ввода ссылок на файлы
- асинхронность
- несколько попыток на скачивание файла
- 
- заменить регулярки и добавление пути на:
-import os
+import asyncio
 from urllib.parse import urlparse
-
-path = urlparse(url).path
-filename = os.path.basename(path)
-print(filename)  
-
-"""
+import aiohttp
+import aiofiles
 
 
-class Downloader:
+class AsyncDownloader:
+    HEADER_BROWSER = 'Mozilla/5.0'
     PATH_INPUT_TEXT = "Введите название папки для сохранения файлов, если папки не существует, то она будет создана: "
     URL_INPUT_TEXT = "Для скачивания файла, введите ссылку: "
-    INCORRECT_PATH_ERROR_TEXT = "Некорректный путь или у программы нет доступа для сохранения по этому пути\n"
-    TIMEOUT = 3
+    INCORRECT_PATH_ERROR_TEXT = "Некорректный путь!"
+    INCORRECT_URL_FORMAT_TEXT = "Некорректный формат ссылки!"
+    PERMISSION_DENIED_TEXT = "Данная папка недоступна для записи!"
+    FILENAME_TO_SAVE_DEFAULT = 'image.jpg'
+    TIMEOUT = 3  # в секундах
+    ATTEMPTS = 1  # количество попыток для скачивания
+    TIME_DELAY = 0  # время между попытками в секундах без блокировки процесса
 
-    def __init__(self, browser='Mozilla/5.0'):
+    def __init__(self):
         self.path = ''
-        self.files_stack = []
-        self.headers = {'User-Agent': browser}
+        self.tasks = set()
+        self.headers = {'User-Agent': self.HEADER_BROWSER}
         self.log = []
+        self.max_len_of_url = 0
 
     def add_path_to_save(self):
         text_input = input(self.PATH_INPUT_TEXT)
         if len(text_input) > 0:
             self.path = self.clean_path(text_input)
             os.makedirs(self.path, exist_ok=True)
+            if not os.access(self.path, os.W_OK):
+                print(f"{self.PERMISSION_DENIED_TEXT}")
+                return self.add_path_to_save()
+        return None
 
     @staticmethod
     def clean_path(dirty_path):
         return re.sub(r'[^A-Za-z0-9_\-/. ]+', '_', dirty_path)
 
-    def add_file_url_to_load(self):
-        self.files_stack.append(input(self.URL_INPUT_TEXT))
+    async def add_url(self, session, url: str) -> bool:
+        url = url.strip()
+        parsed = urlparse(url)
+        if not url:
+            return False
+        if parsed.scheme not in ("http", "https"):
+            print(self.INCORRECT_URL_FORMAT_TEXT)
+            return False
 
-    def download(self, url: str, filename):
-        response = requests.get(url, headers=self.headers, timeout=self.TIMEOUT)
+        self.max_len_of_url = max(self.max_len_of_url, len(url))
+        task = asyncio.create_task(self.download(session, url))
+        self.tasks.add(task)
+        task.add_done_callback(lambda t: self.tasks.discard(t))
+        return True
+
+    async def download(self, session, url):
+        filename = self.filename_from_url(url)
         save_path = os.path.join(self.path, filename)
-        with open(save_path, "wb") as file:
-            file.write(response.content)
+        success = False
 
-    def download_all(self, attempts=3):
-        for _ in range(attempts):
+        for attempt in range(self.ATTEMPTS):
             try:
-                for url_task in self.files_stack:
-                    filename = self.filename_from_url(url_task)
-                    self.download(url=url_task, filename=filename)
-            except Exception as e:
-                print(f'{e}: {filename}')
+                async with session.get(url, headers=self.headers, timeout=self.TIMEOUT) as response:
+                    response.raise_for_status()
+                    content = await response.read()
+                    async with aiofiles.open(save_path, 'wb') as f:
+                        await f.write(content)
+            except Exception:
+                await asyncio.sleep(self.TIME_DELAY)
+                continue
+            else:
+                success = True
+                break
+
+        self.log.append((url, success))
 
 
-
-
-
-    @staticmethod
-    def filename_from_url(url:str) -> str:
-        match = re.search(r'([^/]+)$', url)
-        if match:
-            filename = match.group(1)
-        else:
-            filename = 'image.jpg'
+    def filename_from_url(self, url: str) -> str:
+        path = urlparse(url).path
+        filename = os.path.basename(path)
+        if not filename:
+            filename = self.FILENAME_TO_SAVE_DEFAULT
         return filename
 
-    def logging(self):
-        pass
-
     def print_result(self):
-        pass
+        horizontal_border = "-" * (self.max_len_of_url + 2)
+        bottom = f'+{horizontal_border}+{"-" * 8}+'
+        print(bottom)
+        print(f'| Ссылка{" " * (self.max_len_of_url - 5)}| Статус |')
+        print(bottom)
+        for i in self.log:
+            current_len = len(i[0])
+            print(f'| {i[0]}{" " * (self.max_len_of_url - current_len + 1)}{"| Успех  |" if i[1] else "| Ошибка |"}')
+        print(bottom)
 
-    def start(self):
+    async def start(self):
         try:
             self.add_path_to_save()
         except ValueError:
             print(self.INCORRECT_PATH_ERROR_TEXT)
             self.add_path_to_save()
 
-        self.add_file_url_to_load() # пока только один url
-        self.download_all()
+        timeout = aiohttp.ClientTimeout(total=self.TIMEOUT)
+        async with aiohttp.ClientSession(timeout=timeout, headers=self.headers) as session:
+            while True:
+                url = await asyncio.to_thread(input, self.URL_INPUT_TEXT)
+                if not url:
+                    break
+                await self.add_url(session, url)
 
+            if self.tasks:
+                await asyncio.gather(*self.tasks)
 
+        self.print_result()
+
+async def main():
+    img_downloader = AsyncDownloader()
+    await img_downloader.start()
 
 
 if __name__ == "__main__":
-    img_downloader = Downloader()
-    img_downloader.start()
+    asyncio.run(main())
