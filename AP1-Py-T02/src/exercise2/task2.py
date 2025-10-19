@@ -4,12 +4,31 @@ import asyncio
 from urllib.parse import urlparse
 import aiohttp
 import aiofiles
+import sys
+
+
+"""
+Хочу сделать рамку меню в котором происходят все процессы, рамка постоянно обновляется
+наверхe шапка: Название программы: статистика по файлам
+между рамка
+ниже путь для сохранения файлов
+Ниже введите ссылку или ссылки для скачивания 
+
+ниже блок для обработки 6 файлов со шкалой прогресса, если добавляются новые, старые загрузки уходят наверх
+
+
+внизу 6 потоков загрузок (пустые или нет)
+
+добавить поддержку загрузки списка файлов
+"""
 
 
 class AsyncDownloader:
     HEADER_BROWSER = 'Mozilla/5.0'
+    MODULE_NAME = 'Async Downloader by Renatann'
+    VERSION = '0.3.'
     PATH_INPUT_TEXT = "Введите название папки для сохранения файлов, если папки не существует, то она будет создана: "
-    URL_INPUT_TEXT = "Для скачивания файла, введите ссылку: "
+    URL_INPUT_TEXT = "Для скачивания файлов, вводите ссылки ('' для выхода): "
     INCORRECT_PATH_ERROR_TEXT = "Некорректный путь!"
     INCORRECT_URL_FORMAT_TEXT = "Некорректный формат ссылки!"
     PERMISSION_DENIED_TEXT = "Данная папка недоступна для записи!"
@@ -22,8 +41,10 @@ class AsyncDownloader:
         self.path = ''
         self.tasks = set()
         self.headers = {'User-Agent': self.HEADER_BROWSER}
-        self.log = []
+        self.log = set()
         self.max_len_of_url = 0
+        self.all_loaded_files = 0
+        self.not_loaded_files = 0
 
     def add_path_to_save(self):
         text_input = input(self.PATH_INPUT_TEXT)
@@ -73,8 +94,16 @@ class AsyncDownloader:
                 success = True
                 break
 
-        self.log.append((url, success))
 
+
+        if success:
+            self.all_loaded_files += 1
+            print(f"\nФайл сохранён: {os.path.basename(save_path)}")
+        else:
+            self.not_loaded_files += 1
+
+
+        self.log.add((url, success, self.not_loaded_files + self.all_loaded_files))
 
     def filename_from_url(self, url: str) -> str:
         path = urlparse(url).path
@@ -82,6 +111,12 @@ class AsyncDownloader:
         if not filename:
             filename = self.FILENAME_TO_SAVE_DEFAULT
         return filename
+
+    async def menu_output(self, session):
+        #session
+        sys.stdout.write(
+            f'\r{self.MODULE_NAME}: Файлов в очереди: {0} Файлов скачано: {self.all_loaded_files} Ошибок в скачивании: {self.not_loaded_files}')
+        sys.stdout.flush()
 
     def print_result(self):
         horizontal_border = "-" * (self.max_len_of_url + 2)
@@ -100,11 +135,11 @@ class AsyncDownloader:
         except ValueError:
             print(self.INCORRECT_PATH_ERROR_TEXT)
             self.add_path_to_save()
-
+        print(self.URL_INPUT_TEXT)
         timeout = aiohttp.ClientTimeout(total=self.TIMEOUT)
         async with aiohttp.ClientSession(timeout=timeout, headers=self.headers) as session:
             while True:
-                url = await asyncio.to_thread(input, self.URL_INPUT_TEXT)
+                url = await asyncio.to_thread(input)
                 if not url:
                     break
                 await self.add_url(session, url)
@@ -113,6 +148,7 @@ class AsyncDownloader:
                 await asyncio.gather(*self.tasks)
 
         self.print_result()
+
 
 async def main():
     img_downloader = AsyncDownloader()
