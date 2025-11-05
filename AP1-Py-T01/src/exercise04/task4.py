@@ -1,6 +1,6 @@
 def pascal_triangle():
     num = input()
-    if num.isdigit():
+    if num.isdigit() and int(num) > 0:
         num = int(num)
         for n in range(num):
             for k in range(n + 1):

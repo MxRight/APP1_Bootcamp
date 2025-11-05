@@ -11,5 +11,6 @@ def palindrome():
             num //= 10
         return original == reversed_num
 
+
 if __name__ == "__main__":
     print(palindrome())

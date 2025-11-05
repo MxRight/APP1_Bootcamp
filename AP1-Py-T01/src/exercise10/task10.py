@@ -1,5 +1,5 @@
 def device_selection():
-    error = "Error: incorrect input"
+    error = "\nError: incorrect input"
     try:
         n, t = map(int, input().split())
     except ValueError:

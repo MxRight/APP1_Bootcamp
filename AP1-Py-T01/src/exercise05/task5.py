@@ -1,9 +1,10 @@
 from math import pow
 
+
 def main():
     num = input()
     len_of_num = len(num)
-    error_msg = 'Conversion error!'
+    error_msg = 'Incorrect input!'
     if len_of_num == 0:
         return error_msg
     result = validation(num)
@@ -13,10 +14,12 @@ def main():
     else:
         return error_msg
 
+
 def validation(num: str):
     is_valid = True
     point_flag = False
     minus_flag = False
+    plus_flag = False
     numbers_of_elements = 0
     numbers_after_point = 0
     allow_numbers_str = list(map(str, range(0, 10)))
@@ -25,6 +28,11 @@ def validation(num: str):
         if i == '-' and minus_flag == False and numbers_of_elements == 0:
             minus_flag = True
         elif i == '-' and (minus_flag == True or numbers_of_elements > 0):
+            is_valid = False
+            break
+        elif i == '+' and plus_flag == False and numbers_of_elements == 0:
+            plus_flag = True
+        elif i == '+' and (plus_flag == True or numbers_of_elements > 0):
             is_valid = False
             break
         elif i == '.' and point_flag == True:

@@ -26,5 +26,5 @@
       "title": "Spider-Man",
       "year": 2002
     }
-  ]
+ ]
 }
