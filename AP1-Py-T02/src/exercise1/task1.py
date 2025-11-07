@@ -29,7 +29,8 @@ class Examiner(Man):
     def __init__(self, name: str, gender: str):
         super().__init__(name, gender)
         self.mood = None  # настроение на весь день или на экзамен?
-        self.active = True  # для перерыва
+        self.is_active = True
+        self.breaktime = False
         self.work_time = 0
         self.current_exam = None
         self.all_examined_students = 0
@@ -83,10 +84,21 @@ class Exam:
                 objects = [class_name(line.strip()) for line in f_in]
         setattr(self, self.DICT_OF_SELF[class_name], objects)
 
-    def load_data(self): # пока не используем
+    def load_data(self):  # пока не используем
         for class_name in self.DICT_OF_FILES:
             split_text = class_name is not Question
             self.scan_file(class_name, split_text)
+
+    def start_break(self, examiner_name):
+        examiner_obj = self.dict_of_examiners[examiner_name]
+        examiner_obj.current_exam = "--перерыв--"
+        examiner_obj.is_active = False
+        self.dict_of_examiners[examiner_name] = examiner_obj
+        break_time = random.randint(*self.BREAKTIME_RANGE)
+        time.sleep(break_time)
+        examiner_obj.is_active = True
+        examiner_obj.breaktime = True
+        self.dict_of_examiners[examiner_name] = examiner_obj
 
     def start_exam(self, examiner_name, student):
         # Берём копии из manager-словарей
@@ -107,6 +119,7 @@ class Exam:
 
         # Определяем результат (пока используем заглушку)
         student_obj.succes = random.choice([True, False])
+        student_obj.finish = True
 
         # Обновляем статистику экзаменатора
         examiner_obj.current_exam = None
@@ -119,12 +132,17 @@ class Exam:
         self.dict_of_students[student] = student_obj
         self.dict_of_examiners[examiner_name] = examiner_obj
 
-    def worker(self, examiner_name, stop_flag):
+    def worker(self, examiner_name):
         while True:
+            examinator = self.dict_of_examiners[examiner_name]
+            if examinator.is_active and not examinator.breaktime and examinator.work_time > self.TIME_TO_LUNCH:
+                self.start_break(examiner_name)
+                continue
             try:
-                student = self.tasks.get()
+                student = self.tasks.get(timeout=1)
             except queue.Empty:
                 continue
+
             if student is None:
                 break
             self.start_exam(examiner_name, student)
@@ -164,7 +182,7 @@ class Exam:
     def start(self):
         self.load_demo()
         self.workers = [
-            Process(target=self.worker, args=(examiner, self.stop_flag))
+            Process(target=self.worker, args=(examiner,))
             for examiner in self.dict_of_examiners.keys()
         ]
 
@@ -178,12 +196,12 @@ class Exam:
     def stop(self):
         for _ in self.workers:
             self.tasks.put(None)
-        self.stop_flag.set()
         for p in self.workers:
             p.join()
 
     def clean_screen(func):
         last_height = 0
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             nonlocal last_height
@@ -279,8 +297,12 @@ if __name__ == "__main__":
     exam = Exam()
     exam.start()
     sys.stdout.write("\033[H")
-    while not exam.tasks.empty():
-        time.sleep(0.1)
+    exam.print_double_tables()
+    sys.stdout.flush()
+    while not all(s.succes is not None for s in exam.dict_of_students.values()):
         exam.print_double_tables()
+        sys.stdout.flush()
+        time.sleep(0.1)
+
     exam.stop()
     exam.print_double_tables(finish=True)
