@@ -23,19 +23,19 @@ class Student(Man):
         super().__init__(name, gender)
         self.waiting = True
         self.exam_is_successful = None
+        self.time_of_exam = None
 
 
 class Examiner(Man):
     def __init__(self, name: str, gender: str):
         super().__init__(name, gender)
-        self.mood = None  # настроение на весь день или на экзамен?
+        self.mood = None
         self.is_active = True
         self.breaktime = False
         self.work_time = 0
         self.current_exam = None
         self.all_examined_students = 0
         self.all_failed_students = 0
-
 
     def set_mood(self):
         # 0 - нейтральное настроение
@@ -57,6 +57,11 @@ class Exam:
     TEXT_OUTPUT_ONE = "Осталось в очереди: "
     TEXT_OUTPUT_TWO = "Время с момента начала экзамена: "
     TEXT_OUTPUT_BREAK = "-"
+    TEXT_OUTPUT_ALL_TIME = "Время с момента начала экзамена и до момента и его завершения: "
+    TEXT_OUTPUT_BEST_STUDENTS = "Имена лучших студентов: "
+    TEXT_OUTPUT_BEST_EXAMINERS = "Имена лучших экзаменаторов: "
+    TEXT_OUTPUT_POOR_STUDENTS = "Имена студентов, которых после экзамена отчислят: "
+    TEXT_OUTPUT_FINAL = "Вывод: экзамен"
     TEXT_OUTPUT_BEST_QUESTIONS = "Лучшие вопросы: "
     TIME_TO_LUNCH = 30
     BREAKTIME_RANGE = (12, 18)
@@ -75,7 +80,6 @@ class Exam:
         self.time_start = None
         self.time_from_start = None
         self.all_student = None
-        self.all_passed_students = 0
 
     def scan_file(self, class_name, split_text=True):
         with open(self.DICT_OF_FILES[class_name], "r", encoding="utf-8") as f_in:
@@ -120,6 +124,8 @@ class Exam:
         if not student_obj.exam_is_successful:
             examiner_obj.all_failed_students += 1
 
+        student_obj.time_of_exam = exam_time
+
         # Перезаписываем оба объекта обратно в manager
         self.dict_of_students[student] = student_obj
         self.dict_of_examiners[examiner_name] = examiner_obj
@@ -158,6 +164,7 @@ class Exam:
             "Мария": Student("Мария", "Ж"),
             "Елена": Student("Евгения", "Ж"),
             "Маргарита": Student("Мария", "Ж"),
+
         }
         examiners = {
             "Александр": Examiner("Александр", "М"),
@@ -187,7 +194,6 @@ class Exam:
             for examiner in self.dict_of_examiners.keys()
         ]
 
-        # заполняем очередь студентами
         self.all_student = len(self.dict_of_students)
         for student in self.dict_of_students.keys():
             self.add_task(student)
@@ -202,7 +208,6 @@ class Exam:
 
         # три случайных вопроса
         questions = random.sample(list(self.dict_of_questions.values()), k=3)
-
         correct_total = 0
         wrong_total = 0
 
@@ -220,7 +225,6 @@ class Exam:
                 remaining -= p
             probs[-1] += remaining
 
-            # Девочки отвечают склоняясь к концу вопроса
             if student.gender == "Ж":
                 probs = list(reversed(probs))
 
@@ -282,10 +286,17 @@ class Exam:
 
         return wrapper
 
-    def print_data(self):
+    def print_data(self, finish=False):
         self.set_elapsed_time()
-        print(
-            f'\r{self.TEXT_OUTPUT_ONE} {self.tasks.qsize()} из {self.all_student}\n{self.TEXT_OUTPUT_TWO} {self.time_from_start:.2f}')
+        text = self.TEXT_OUTPUT_ALL_TIME
+        if not finish:
+            text = self.TEXT_OUTPUT_TWO
+            print(f'{self.TEXT_OUTPUT_ONE} {self.tasks.qsize()} из {self.all_student}')
+        print(f'{text} {self.time_from_start:.2f}')
+
+    @staticmethod
+    def comma_join(items):
+        return ', '.join(str(i) for i in items) if items else ''
 
     @staticmethod
     def sort_key(item):
@@ -362,18 +373,47 @@ class Exam:
         print()
         self.print_examine_table(finish=finish)
         print()
-        self.print_data()
+        self.print_data(finish=finish)
 
     def print_statistics(self):
-        max_points_questions = max(q.score_points for q in self.dict_of_questions.values())
+        max_points_questions = max((q.score_points for q in self.dict_of_questions.values()), default=None)
         best_questions = [
             q.question for q in self.dict_of_questions.values()
             if q.score_points == max_points_questions
         ]
-        separator = ""
-        if len(best_questions) > 1:
-            separator = ", "
-        print(f'{self.TEXT_OUTPUT_BEST_QUESTIONS} {separator.join(best_questions)}')
+
+        best_time = min((s.time_of_exam for s in self.dict_of_students.values() if s.exam_is_successful), default=None)
+        poor_time = min((s.time_of_exam for s in self.dict_of_students.values() if not s.exam_is_successful),
+                        default=None)
+        best_students = []
+        poor_students = []
+        all_passed_students = 0
+
+        for s in self.dict_of_students.values():
+            if s.exam_is_successful:
+                all_passed_students += 1
+                if s.time_of_exam == best_time:
+                    best_students.append(s.name)
+            elif s.time_of_exam == poor_time and not s.exam_is_successful:
+                poor_students.append(s.name)
+
+        low_examiner_percent = min((
+            e.all_failed_students / e.all_examined_students for e in
+            self.dict_of_examiners.values() if e.all_examined_students > 0), default=None)
+
+        best_examiners = []
+
+        for e in self.dict_of_examiners.values():
+            if e.all_examined_students > 0 and e.all_failed_students / e.all_examined_students <= low_examiner_percent:
+                best_examiners.append(e.name)
+
+        print(f'{self.TEXT_OUTPUT_BEST_STUDENTS} {self.comma_join(sorted(best_students))}')
+        print(f'{self.TEXT_OUTPUT_BEST_EXAMINERS}{self.comma_join(sorted(best_examiners))}')
+        print(f'{self.TEXT_OUTPUT_POOR_STUDENTS}{self.comma_join(sorted(poor_students))}')
+        print(f'{self.TEXT_OUTPUT_BEST_QUESTIONS} {self.comma_join(best_questions)}')
+        ratio = all_passed_students / self.all_student if self.all_student else 0
+        result_text = "удался" if ratio >= 0.85 else "не удался"
+        print(f"{self.TEXT_OUTPUT_FINAL} {result_text}")
 
 
 if __name__ == "__main__":
