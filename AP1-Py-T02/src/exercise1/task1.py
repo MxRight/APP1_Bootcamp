@@ -22,7 +22,7 @@ class Student(Man):
     def __init__(self, name: str, gender: str):
         super().__init__(name, gender)
         self.waiting = True
-        self.succes = None
+        self.exam_is_successful = None
 
 
 class Examiner(Man):
@@ -36,17 +36,18 @@ class Examiner(Man):
         self.all_examined_students = 0
         self.all_failed_students = 0
 
-    @staticmethod
-    def set_mood():
+
+    def set_mood(self):
         # 0 - нейтральное настроение
         # 1 - плохое настроение
         # 2 - хорошее настроение
-        return random.choice(([0, 1, 0, 2, 0, 2, 0, 0]))
+        self.mood = random.choice(([0, 1, 0, 2, 0, 2, 0, 0]))
 
 
 class Question:
     def __init__(self, question):
         self.question = question
+        self.score_points = 0
 
     def __repr__(self):
         return f'<Вопрос: {self.question}>'
@@ -55,6 +56,8 @@ class Question:
 class Exam:
     TEXT_OUTPUT_ONE = "Осталось в очереди: "
     TEXT_OUTPUT_TWO = "Время с момента начала экзамена: "
+    TEXT_OUTPUT_BREAK = "-"
+    TEXT_OUTPUT_BEST_QUESTIONS = "Лучшие вопросы: "
     TIME_TO_LUNCH = 30
     BREAKTIME_RANGE = (12, 18)
     GOLDEN_RATIO = 1.618
@@ -63,11 +66,9 @@ class Exam:
 
     def __init__(self):
         manager = Manager()
-
         self.dict_of_examiners = manager.dict()
         self.dict_of_students = manager.dict()
         self.dict_of_questions = manager.dict()
-
         self.tasks = Queue()
         self.stop_flag = Event()
         self.workers = []
@@ -91,7 +92,7 @@ class Exam:
 
     def start_break(self, examiner_name):
         examiner_obj = self.dict_of_examiners[examiner_name]
-        examiner_obj.current_exam = "--перерыв--"
+        examiner_obj.current_exam = self.TEXT_OUTPUT_BREAK
         examiner_obj.is_active = False
         self.dict_of_examiners[examiner_name] = examiner_obj
         break_time = random.randint(*self.BREAKTIME_RANGE)
@@ -101,31 +102,22 @@ class Exam:
         self.dict_of_examiners[examiner_name] = examiner_obj
 
     def start_exam(self, examiner_name, student):
-        # Берём копии из manager-словарей
         student_obj = self.dict_of_students[student]
         examiner_obj = self.dict_of_examiners[examiner_name]
-
-        # Отмечаем: студент сдал документы и зашёл
         student_obj.waiting = False
         examiner_obj.current_exam = student
+        examiner_obj.set_mood()
         self.dict_of_examiners[examiner_name] = examiner_obj
-
-        # Время экзамена зависит от длины имени экзаменатора
         exam_time = random.randint(len(examiner_name) - 1, len(examiner_name) + 1)
-
         self.dict_of_examiners[examiner_name] = examiner_obj
-
+        student_obj.exam_is_successful = self.choosing_answers(examiner_name,
+                                                               student)
         time.sleep(exam_time)
-
-        # Определяем результат (пока используем заглушку)
-        student_obj.succes = random.choice([True, False])
-        student_obj.finish = True
-
         # Обновляем статистику экзаменатора
         examiner_obj.current_exam = None
         examiner_obj.work_time += exam_time
         examiner_obj.all_examined_students += 1
-        if not student_obj.succes:
+        if not student_obj.exam_is_successful:
             examiner_obj.all_failed_students += 1
 
         # Перезаписываем оба объекта обратно в manager
@@ -170,14 +162,23 @@ class Exam:
         examiners = {
             "Александр": Examiner("Александр", "М"),
             "Дмитрий": Examiner("Дмитрий", "М"),
-            "Михаил": Examiner("Михаил", "М"),
+            "Елена": Examiner("Михаил", "Ж"),
         }
+
+        questions = {
+            "Там стоит стол": Question("Там стоит стол"),
+            "Человек собаке друг": Question("Человек собаке друг"),
+            "Солнечные затмения влияют на людей": Question("Солнечные затмения влияют на людей"),
+            "Программирование интересное занятие": Question("Программирование интересное занятие")}
 
         for name, student in students.items():
             self.dict_of_students[name] = student
 
         for name, examiner in examiners.items():
             self.dict_of_examiners[name] = examiner
+
+        for question, ex_class in questions.items():
+            self.dict_of_questions[question] = ex_class
 
     def start(self):
         self.load_demo()
@@ -192,6 +193,66 @@ class Exam:
             self.add_task(student)
         self.time_start = time.time()
         self.start_workers()
+
+    def choosing_answers(self, examiner_name, student_name):
+        student = self.dict_of_students[student_name]
+        examiner = self.dict_of_examiners[examiner_name]
+
+        phi = self.GOLDEN_RATIO
+
+        # три случайных вопроса
+        questions = random.sample(list(self.dict_of_questions.values()), k=3)
+
+        correct_total = 0
+        wrong_total = 0
+
+        for question_obj in questions:
+            words = question_obj.question.split()
+            n = len(words)
+            if n == 0:
+                continue
+
+            probs = []
+            remaining = 1.0
+            for _ in range(n):
+                p = remaining / phi
+                probs.append(p)
+                remaining -= p
+            probs[-1] += remaining
+
+            # Девочки отвечают склоняясь к концу вопроса
+            if student.gender == "Ж":
+                probs = list(reversed(probs))
+
+            student_answer = random.choices(words, weights=probs, k=1)[0]
+
+            examiner_probs = list(reversed(probs)) if examiner.gender == "Ж" else probs
+            correct_answers = []
+            available = words[:]
+
+            while available:
+                picked = random.choices(available, weights=examiner_probs[:len(available)], k=1)[0]
+                correct_answers.append(picked)
+                idx = available.index(picked)
+                available.pop(idx)
+                examiner_probs.pop(idx)
+                if random.random() > 1 / 3:
+                    break
+
+            if student_answer in correct_answers:
+                correct_total += 1
+                question_obj.score_points += 1
+                self.dict_of_questions[question_obj.question] = question_obj
+
+            else:
+                wrong_total += 1
+
+        if examiner.mood == 0:
+            return correct_total > wrong_total
+        elif examiner.mood == 1:
+            return False
+        elif examiner.mood == 2:
+            return True
 
     def stop(self):
         for _ in self.workers:
@@ -217,7 +278,6 @@ class Exam:
 
             sys.stdout.write(output)
             sys.stdout.flush()
-
             last_height = lines
 
         return wrapper
@@ -227,13 +287,25 @@ class Exam:
         print(
             f'\r{self.TEXT_OUTPUT_ONE} {self.tasks.qsize()} из {self.all_student}\n{self.TEXT_OUTPUT_TWO} {self.time_from_start:.2f}')
 
+    @staticmethod
+    def sort_key(item):
+        name, s = item
+        if s.waiting:
+            order = 0  # очередь
+        elif s.exam_is_successful:
+            order = 1  # сдал
+        else:
+            order = 2  # провалил
+        return (order, name)
+
     def print_student_table(self):
         student_table = PrettyTable()
         student_table.field_names = ["Студент", "Статус"]
-        for student_name, student in self.dict_of_students.items():
+
+        for student_name, student in sorted(self.dict_of_students.items(), key=self.sort_key):
             if getattr(student, "waiting", False):
                 status = "Очередь"
-            elif getattr(student, "succes", False):
+            elif getattr(student, "exam_is_successful", False):
                 status = "Сдал"
             else:
                 status = "Провалил"
@@ -292,6 +364,17 @@ class Exam:
         print()
         self.print_data()
 
+    def print_statistics(self):
+        max_points_questions = max(q.score_points for q in self.dict_of_questions.values())
+        best_questions = [
+            q.question for q in self.dict_of_questions.values()
+            if q.score_points == max_points_questions
+        ]
+        separator = ""
+        if len(best_questions) > 1:
+            separator = ", "
+        print(f'{self.TEXT_OUTPUT_BEST_QUESTIONS} {separator.join(best_questions)}')
+
 
 if __name__ == "__main__":
     exam = Exam()
@@ -299,10 +382,11 @@ if __name__ == "__main__":
     sys.stdout.write("\033[H")
     exam.print_double_tables()
     sys.stdout.flush()
-    while not all(s.succes is not None for s in exam.dict_of_students.values()):
+    while not all(s.exam_is_successful is not None for s in exam.dict_of_students.values()):
         exam.print_double_tables()
         sys.stdout.flush()
         time.sleep(0.1)
 
     exam.stop()
     exam.print_double_tables(finish=True)
+    exam.print_statistics()
