@@ -165,7 +165,7 @@ class Exam:
                             ex = Examiner(name, gender)
                             self.dict_of_examiners[name] = ex
                         except ValueError:
-                            print(f"⚠Ошибка в строке '{line}' файла '{file_path}'.")
+                            print(f"Ошибка в строке '{line}' файла '{file_path}'.")
                             return False
 
             if not self.dict_of_examiners or not self.dict_of_students or not self.dict_of_questions:
