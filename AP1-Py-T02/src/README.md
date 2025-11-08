@@ -1,5 +1,3 @@
-## Черновик проекта | UNDER CONSTRUCTION!
-
 # Project 02 — Python_Bootcamp
 
 ## Задание 1. Экзамен
