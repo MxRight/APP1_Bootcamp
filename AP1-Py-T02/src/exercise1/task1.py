@@ -3,6 +3,7 @@ from multiprocessing import Process, Queue, Event, Manager
 import queue
 import random
 import sys
+import os
 from functools import wraps
 from io import StringIO
 
@@ -107,10 +108,13 @@ class Exam:
     TEXT_OUTPUT_POOR_STUDENTS = "Имена студентов, которых после экзамена отчислят: "
     TEXT_OUTPUT_FINAL = "Вывод: экзамен"
     TEXT_OUTPUT_BEST_QUESTIONS = "Лучшие вопросы: "
+    TEXT_LOAD_DEMO = "Для демонстрации работы программы будут использованы базовые данные (для загрузки данных из файлов, проверьте их корректность)"
     TIME_TO_LUNCH = 30
     BREAKTIME_RANGE = (12, 18)
     GOLDEN_RATIO = 1.618
-    DICT_OF_FILES = {Examiner: "examiners.txt", Question: "questions.txt", Student: "students.txt"}
+    DATA_PATH = "data/"
+    DICT_OF_FILES = {Examiner: f"{DATA_PATH}examiners.txt", Question: f"{DATA_PATH}questions.txt",
+                     Student: f"{DATA_PATH}students.txt"}
     DICT_OF_SELF = {Examiner: "list_of_examiners", Question: "list_of_questions", Student: "list_of_students"}
 
     def __init__(self):
@@ -125,18 +129,58 @@ class Exam:
         self.time_from_start = None
         self.all_student = None
 
-    def scan_file(self, class_name, split_text=True):
-        with open(self.DICT_OF_FILES[class_name], "r", encoding="utf-8") as f_in:
-            if split_text:
-                objects = [class_name(*line.strip().split()) for line in f_in]
-            else:
-                objects = [class_name(line.strip()) for line in f_in]
-        setattr(self, self.DICT_OF_SELF[class_name], objects)
+    def load_data(self) -> bool:
+        try:
+            for cls in self.DICT_OF_FILES:
+                file_path = self.DICT_OF_FILES[cls]
+                if not os.path.exists(file_path):
+                    print(f"Файл '{file_path}' не найден.")
+                    return False
 
-    def load_data(self):  # пока не используем
-        for class_name in self.DICT_OF_FILES:
-            split_text = class_name is not Question
-            self.scan_file(class_name, split_text)
+                with open(file_path, "r", encoding="utf-8") as f_in:
+                    lines = [line.strip() for line in f_in if line.strip()]
+
+                if not lines:
+                    print(f"Файл '{file_path}' пуст.")
+                    return False
+
+                if cls is Question:
+                    for line in lines:
+                        q = Question(line)
+                        self.dict_of_questions[q.question] = q
+
+                elif cls is Student:
+                    for line in lines:
+                        try:
+                            name, gender = line.split()
+                            self.dict_of_students[name] = Student(name, gender)
+                        except ValueError:
+                            print(f"Ошибка в строке '{line}' файла '{file_path}'.")
+                            return False
+
+                elif cls is Examiner:
+                    for line in lines:
+                        try:
+                            name, gender = line.split()
+                            ex = Examiner(name, gender)
+                            self.dict_of_examiners[name] = ex
+                        except ValueError:
+                            print(f"⚠Ошибка в строке '{line}' файла '{file_path}'.")
+                            return False
+
+            if not self.dict_of_examiners or not self.dict_of_students or not self.dict_of_questions:
+                print("Не удалось загрузить данные из всех файлов.")
+                return False
+
+            return True
+
+        except (FileNotFoundError, PermissionError) as e:
+            print(f"Ошибка доступа к файлу: {e}")
+            return False
+
+        except Exception as e:
+            print(f"Неизвестная ошибка при загрузке данных: {e}")
+            return False
 
     def start_break(self, examiner_name):
         examiner_obj = self.dict_of_examiners[examiner_name]
@@ -161,7 +205,6 @@ class Exam:
         student_obj.exam_is_successful = self.choosing_answers(examiner_name,
                                                                student)
         time.sleep(exam_time)
-        # Обновляем статистику экзаменатора
         examiner_obj.current_exam = None
         examiner_obj.work_time += exam_time
         examiner_obj.all_examined_students += 1
@@ -169,8 +212,6 @@ class Exam:
             examiner_obj.all_failed_students += 1
 
         student_obj.time_of_exam = exam_time
-
-        # Перезаписываем оба объекта обратно в manager
         self.dict_of_students[student] = student_obj
         self.dict_of_examiners[examiner_name] = examiner_obj
 
@@ -232,7 +273,14 @@ class Exam:
             self.dict_of_questions[question] = ex_class
 
     def start(self):
-        self.load_demo()
+        if not self.load_data():
+            print(f"{self.TEXT_LOAD_DEMO}")
+            time.sleep(5)
+            manager = Manager()
+            self.dict_of_examiners = manager.dict()
+            self.dict_of_students = manager.dict()
+            self.dict_of_questions = manager.dict()
+            self.load_demo()
         self.workers = [
             Process(target=self.worker, args=(examiner,))
             for examiner in self.dict_of_examiners.keys()
