@@ -5,6 +5,7 @@ import random
 import sys
 import os
 from functools import wraps
+import constants
 from io import StringIO
 
 try:
@@ -99,22 +100,8 @@ class MyTools:
 
 
 class Exam:
-    TEXT_OUTPUT_ONE = "Осталось в очереди: "
-    TEXT_OUTPUT_TWO = "Время с момента начала экзамена: "
-    TEXT_OUTPUT_BREAK = "-"
-    TEXT_OUTPUT_ALL_TIME = "Время с момента начала экзамена и до момента и его завершения: "
-    TEXT_OUTPUT_BEST_STUDENTS = "Имена лучших студентов: "
-    TEXT_OUTPUT_BEST_EXAMINERS = "Имена лучших экзаменаторов: "
-    TEXT_OUTPUT_POOR_STUDENTS = "Имена студентов, которых после экзамена отчислят: "
-    TEXT_OUTPUT_FINAL = "Вывод: экзамен"
-    TEXT_OUTPUT_BEST_QUESTIONS = "Лучшие вопросы: "
-    TEXT_LOAD_DEMO = "Для демонстрации работы программы будут использованы базовые данные (для загрузки данных из файлов, проверьте их корректность)"
-    TIME_TO_LUNCH = 30
-    BREAKTIME_RANGE = (12, 18)
-    GOLDEN_RATIO = 1.618
-    DATA_PATH = "data/"
-    DICT_OF_FILES = {Examiner: f"{DATA_PATH}examiners.txt", Question: f"{DATA_PATH}questions.txt",
-                     Student: f"{DATA_PATH}students.txt"}
+    DICT_OF_FILES = {Examiner: f"{constants.DATA_PATH}examiners.txt", Question: f"{constants.DATA_PATH}questions.txt",
+                     Student: f"{constants.DATA_PATH}students.txt"}
     DICT_OF_SELF = {Examiner: "list_of_examiners", Question: "list_of_questions", Student: "list_of_students"}
 
     def __init__(self):
@@ -184,10 +171,10 @@ class Exam:
 
     def start_break(self, examiner_name):
         examiner_obj = self.dict_of_examiners[examiner_name]
-        examiner_obj.current_exam = self.TEXT_OUTPUT_BREAK
+        examiner_obj.current_exam = constants.TEXT_OUTPUT_BREAK
         examiner_obj.is_active = False
         self.dict_of_examiners[examiner_name] = examiner_obj
-        break_time = random.randint(*self.BREAKTIME_RANGE)
+        break_time = random.randint(*constants.BREAKTIME_RANGE)
         time.sleep(break_time)
         examiner_obj.is_active = True
         examiner_obj.breaktime = True
@@ -218,7 +205,7 @@ class Exam:
     def worker(self, examiner_name):
         while True:
             examinator = self.dict_of_examiners[examiner_name]
-            if examinator.is_active and not examinator.breaktime and examinator.work_time > self.TIME_TO_LUNCH:
+            if examinator.is_active and not examinator.breaktime and examinator.work_time > constants.TIME_TO_LUNCH:
                 self.start_break(examiner_name)
                 continue
             try:
@@ -274,7 +261,7 @@ class Exam:
 
     def start(self):
         if not self.load_data():
-            print(f"{self.TEXT_LOAD_DEMO}")
+            print(f"{constants.TEXT_LOAD_DEMO}")
             time.sleep(5)
             manager = Manager()
             self.dict_of_examiners = manager.dict()
@@ -306,7 +293,7 @@ class Exam:
     def choosing_answers(self, examiner_name, student_name):
         student = self.dict_of_students[student_name]
         examiner = self.dict_of_examiners[examiner_name]
-        phi = self.GOLDEN_RATIO
+        phi = constants.GOLDEN_RATIO
         questions = random.sample(list(self.dict_of_questions.values()), k=3)
         correct_total = 0
         wrong_total = 0
@@ -366,10 +353,10 @@ class Exam:
 
     def print_data(self, finish=False):
         self.set_elapsed_time()
-        text = self.TEXT_OUTPUT_ALL_TIME
+        text = constants.TEXT_OUTPUT_ALL_TIME
         if not finish:
-            text = self.TEXT_OUTPUT_TWO
-            print(f'{self.TEXT_OUTPUT_ONE} {self.tasks.qsize()} из {self.all_student}')
+            text = constants.TEXT_OUTPUT_TWO
+            print(f'{constants.TEXT_OUTPUT_ONE} {self.tasks.qsize()} из {self.all_student}')
         print(f'{text} {self.time_from_start:.2f}')
 
     def print_student_table(self):
@@ -427,7 +414,6 @@ class Exam:
                     examiner.all_failed_students,
                     examiner.work_time
                 ])
-
         print(examiner_table)
 
     @MyTools.clean_screen
@@ -470,13 +456,13 @@ class Exam:
             if e.all_examined_students > 0 and e.all_failed_students / e.all_examined_students <= low_examiner_percent:
                 best_examiners.append(e.name)
 
-        print(f'{self.TEXT_OUTPUT_BEST_STUDENTS} {MyTools.comma_join(sorted(best_students))}')
-        print(f'{self.TEXT_OUTPUT_BEST_EXAMINERS}{MyTools.comma_join(sorted(best_examiners))}')
-        print(f'{self.TEXT_OUTPUT_POOR_STUDENTS}{MyTools.comma_join(sorted(poor_students))}')
-        print(f'{self.TEXT_OUTPUT_BEST_QUESTIONS} {MyTools.comma_join(sorted(best_questions))}')
+        print(f'{constants.TEXT_OUTPUT_BEST_STUDENTS} {MyTools.comma_join(sorted(best_students))}')
+        print(f'{constants.TEXT_OUTPUT_BEST_EXAMINERS}{MyTools.comma_join(sorted(best_examiners))}')
+        print(f'{constants.TEXT_OUTPUT_POOR_STUDENTS}{MyTools.comma_join(sorted(poor_students))}')
+        print(f'{constants.TEXT_OUTPUT_BEST_QUESTIONS} {MyTools.comma_join(sorted(best_questions))}')
         ratio = all_passed_students / self.all_student if self.all_student else 0
         result_text = "удался" if ratio >= 0.85 else "не удался"
-        print(f"{self.TEXT_OUTPUT_FINAL} {result_text}")
+        print(f"{constants.TEXT_OUTPUT_FINAL} {result_text}")
 
 
 if __name__ == "__main__":

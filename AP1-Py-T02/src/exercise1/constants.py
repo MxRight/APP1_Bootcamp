@@ -1,0 +1,14 @@
+TEXT_OUTPUT_ONE = "Осталось в очереди: "
+TEXT_OUTPUT_TWO = "Время с момента начала экзамена: "
+TEXT_OUTPUT_BREAK = "-"
+TEXT_OUTPUT_ALL_TIME = "Время с момента начала экзамена и до момента и его завершения: "
+TEXT_OUTPUT_BEST_STUDENTS = "Имена лучших студентов: "
+TEXT_OUTPUT_BEST_EXAMINERS = "Имена лучших экзаменаторов: "
+TEXT_OUTPUT_POOR_STUDENTS = "Имена студентов, которых после экзамена отчислят: "
+TEXT_OUTPUT_FINAL = "Вывод: экзамен"
+TEXT_OUTPUT_BEST_QUESTIONS = "Лучшие вопросы: "
+TEXT_LOAD_DEMO = "Для демонстрации работы программы будут использованы базовые данные (для загрузки данных из файлов, проверьте их корректность)"
+TIME_TO_LUNCH = 30
+BREAKTIME_RANGE = (12, 18)
+GOLDEN_RATIO = 1.618
+DATA_PATH = "data/"
