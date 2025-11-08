@@ -12,12 +12,12 @@ echo "==============================="
 echo ""
 
 if ! command -v python3 &>/dev/null; then
-  echo "❌ Python3 не найден. Установите Python3 и повторите попытку."
+  echo "Python3 не найден. Установите Python3 и повторите попытку."
   exit 1
 fi
 
 if [ ! -d ".venv" ]; then
-  echo "📦 Создаём виртуальное окружение (.venv)..."
+  echo "Создаём виртуальное окружение (.venv)..."
   python3 -m venv .venv
 else
   echo "Окружение .venv уже существует."
@@ -32,7 +32,7 @@ if [ -f "requirements.txt" ]; then
   echo "Устанавливаем зависимости..."
   pip install -r requirements.txt
 else
-  echo "⚠Файл requirements.txt не найден, пропускаем установку зависимостей."
+  echo "Файл requirements.txt не найден, пропускаем установку зависимостей."
 fi
 
 echo ""
