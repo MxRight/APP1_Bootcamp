@@ -2,11 +2,15 @@ import time
 from multiprocessing import Process, Queue, Event, Manager
 import queue
 import random
-import os
 import sys
-from prettytable import PrettyTable
 from functools import wraps
 from io import StringIO
+
+try:
+    from prettytable import PrettyTable
+except ModuleNotFoundError:
+    print("Пожалуйста, установите зависимости: pip install -r requirements.txt")
+    exit(1)
 
 
 class Man:
@@ -51,6 +55,46 @@ class Question:
 
     def __repr__(self):
         return f'<Вопрос: {self.question}>'
+
+
+class MyTools:
+
+    def clean_screen(func):
+        last_height = 0
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            nonlocal last_height
+            import contextlib
+            buffer = StringIO()
+            with contextlib.redirect_stdout(buffer):
+                func(*args, **kwargs)
+            output = buffer.getvalue()
+            lines = output.count("\n") + 1
+            if last_height:
+                sys.stdout.write(f"\033[{last_height}F")
+                sys.stdout.write("\033[J")
+
+            sys.stdout.write(output)
+            sys.stdout.flush()
+            last_height = lines
+
+        return wrapper
+
+    @staticmethod
+    def comma_join(items):
+        return ', '.join(str(i) for i in items) if items else ''
+
+    @staticmethod
+    def sort_key(item):
+        name, s = item
+        if s.waiting:
+            order = 0  # очередь
+        elif s.exam_is_successful:
+            order = 1  # сдал
+        else:
+            order = 2  # провалил
+        return (order, name)
 
 
 class Exam:
@@ -199,14 +243,22 @@ class Exam:
             self.add_task(student)
         self.time_start = time.time()
         self.start_workers()
+        sys.stdout.write("\033[H")
+        exam.print_double_tables()
+        sys.stdout.flush()
+        while not all(s.exam_is_successful is not None for s in exam.dict_of_students.values()):
+            exam.print_double_tables()
+            sys.stdout.flush()
+            time.sleep(0.1)
+
+        exam.stop()
+        exam.print_double_tables(finish=True)
+        exam.print_statistics()
 
     def choosing_answers(self, examiner_name, student_name):
         student = self.dict_of_students[student_name]
         examiner = self.dict_of_examiners[examiner_name]
-
         phi = self.GOLDEN_RATIO
-
-        # три случайных вопроса
         questions = random.sample(list(self.dict_of_questions.values()), k=3)
         correct_total = 0
         wrong_total = 0
@@ -264,28 +316,6 @@ class Exam:
         for p in self.workers:
             p.join()
 
-    def clean_screen(func):
-        last_height = 0
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            nonlocal last_height
-            import contextlib
-            buffer = StringIO()
-            with contextlib.redirect_stdout(buffer):
-                func(*args, **kwargs)
-            output = buffer.getvalue()
-            lines = output.count("\n") + 1
-            if last_height:
-                sys.stdout.write(f"\033[{last_height}F")
-                sys.stdout.write("\033[J")
-
-            sys.stdout.write(output)
-            sys.stdout.flush()
-            last_height = lines
-
-        return wrapper
-
     def print_data(self, finish=False):
         self.set_elapsed_time()
         text = self.TEXT_OUTPUT_ALL_TIME
@@ -294,26 +324,11 @@ class Exam:
             print(f'{self.TEXT_OUTPUT_ONE} {self.tasks.qsize()} из {self.all_student}')
         print(f'{text} {self.time_from_start:.2f}')
 
-    @staticmethod
-    def comma_join(items):
-        return ', '.join(str(i) for i in items) if items else ''
-
-    @staticmethod
-    def sort_key(item):
-        name, s = item
-        if s.waiting:
-            order = 0  # очередь
-        elif s.exam_is_successful:
-            order = 1  # сдал
-        else:
-            order = 2  # провалил
-        return (order, name)
-
     def print_student_table(self):
         student_table = PrettyTable()
         student_table.field_names = ["Студент", "Статус"]
 
-        for student_name, student in sorted(self.dict_of_students.items(), key=self.sort_key):
+        for student_name, student in sorted(self.dict_of_students.items(), key=MyTools.sort_key):
             if getattr(student, "waiting", False):
                 status = "Очередь"
             elif getattr(student, "exam_is_successful", False):
@@ -367,7 +382,7 @@ class Exam:
 
         print(examiner_table)
 
-    @clean_screen
+    @MyTools.clean_screen
     def print_double_tables(self, finish=False):
         self.print_student_table()
         print()
@@ -407,10 +422,10 @@ class Exam:
             if e.all_examined_students > 0 and e.all_failed_students / e.all_examined_students <= low_examiner_percent:
                 best_examiners.append(e.name)
 
-        print(f'{self.TEXT_OUTPUT_BEST_STUDENTS} {self.comma_join(sorted(best_students))}')
-        print(f'{self.TEXT_OUTPUT_BEST_EXAMINERS}{self.comma_join(sorted(best_examiners))}')
-        print(f'{self.TEXT_OUTPUT_POOR_STUDENTS}{self.comma_join(sorted(poor_students))}')
-        print(f'{self.TEXT_OUTPUT_BEST_QUESTIONS} {self.comma_join(best_questions)}')
+        print(f'{self.TEXT_OUTPUT_BEST_STUDENTS} {MyTools.comma_join(sorted(best_students))}')
+        print(f'{self.TEXT_OUTPUT_BEST_EXAMINERS}{MyTools.comma_join(sorted(best_examiners))}')
+        print(f'{self.TEXT_OUTPUT_POOR_STUDENTS}{MyTools.comma_join(sorted(poor_students))}')
+        print(f'{self.TEXT_OUTPUT_BEST_QUESTIONS} {MyTools.comma_join(sorted(best_questions))}')
         ratio = all_passed_students / self.all_student if self.all_student else 0
         result_text = "удался" if ratio >= 0.85 else "не удался"
         print(f"{self.TEXT_OUTPUT_FINAL} {result_text}")
@@ -419,14 +434,3 @@ class Exam:
 if __name__ == "__main__":
     exam = Exam()
     exam.start()
-    sys.stdout.write("\033[H")
-    exam.print_double_tables()
-    sys.stdout.flush()
-    while not all(s.exam_is_successful is not None for s in exam.dict_of_students.values()):
-        exam.print_double_tables()
-        sys.stdout.flush()
-        time.sleep(0.1)
-
-    exam.stop()
-    exam.print_double_tables(finish=True)
-    exam.print_statistics()
