@@ -10,7 +10,7 @@ from io import StringIO
 try:
     from prettytable import PrettyTable
 except ModuleNotFoundError:
-    print("Пожалуйста, установите зависимости: pip install -r requirements.txt")
+    print("Пожалуйста, настройте venv и установите зависимости или запустите: source install.sh")
     exit(1)
 
 
