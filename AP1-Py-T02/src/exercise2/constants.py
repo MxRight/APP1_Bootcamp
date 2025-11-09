@@ -1,0 +1,12 @@
+HEADER_BROWSER = 'Mozilla/5.0'
+MODULE_NAME = 'Async Downloader by Renatann'
+VERSION = '0.8'
+PATH_INPUT_TEXT = "Введите название папки для сохранения файлов, если папки не существует, то она будет создана (по умолчанию используется папка img): "
+URL_INPUT_TEXT = "Для скачивания файлов, вводите ссылки поддерживаются массивы ссылок через пробел, запятую, перенос строки (Enter для выхода): "
+INCORRECT_PATH_ERROR_TEXT = "Некорректный путь!"
+INCORRECT_URL_FORMAT_TEXT = "Некорректный формат ссылки!"
+PERMISSION_DENIED_TEXT = "Данная папка недоступна для записи!"
+FILENAME_TO_SAVE_DEFAULT = 'image.jpg'
+TIMEOUT = 3
+ATTEMPTS = 1
+TIME_DELAY = 0

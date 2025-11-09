@@ -4,35 +4,23 @@ import asyncio
 from pathlib import Path
 from urllib.parse import urlparse
 import requests
+import constants
 
 
 class AsyncDownloader:
-    HEADER_BROWSER = 'Mozilla/5.0'
-    MODULE_NAME = 'Async Downloader by Renatann'
-    VERSION = '0.8'
-    PATH_INPUT_TEXT = "Введите название папки для сохранения файлов, если папки не существует, то она будет создана (по умолчанию используется папка img): "
-    URL_INPUT_TEXT = "Для скачивания файлов, вводите ссылки поддерживаются массивы ссылок через пробел, запятую, перенос строки (Enter для выхода): "
-    INCORRECT_PATH_ERROR_TEXT = "Некорректный путь!"
-    INCORRECT_URL_FORMAT_TEXT = "Некорректный формат ссылки!"
-    PERMISSION_DENIED_TEXT = "Данная папка недоступна для записи!"
-    FILENAME_TO_SAVE_DEFAULT = 'image.jpg'
-    TIMEOUT = 3
-    ATTEMPTS = 1
-    TIME_DELAY = 0
-
     def __init__(self):
         self.path = 'img/'
         self.tasks = set()
-        self.headers = {'User-Agent': self.HEADER_BROWSER}
+        self.headers = {'User-Agent': constants.HEADER_BROWSER}
         self.log = set()
         self.max_len_of_url = 0
         self.all_loaded_files = 0
         self.not_loaded_files = 0
         self.first_output = True
-        self.title = f'{self.MODULE_NAME} Ver.:{self.VERSION}'
+        self.title = f'{constants.MODULE_NAME} Ver.:{constants.VERSION}'
 
     def add_path_to_save(self) -> bool:
-        text_input = input(self.PATH_INPUT_TEXT).strip()
+        text_input = input(constants.PATH_INPUT_TEXT).strip()
         if not text_input:
             text_input = self.path
         path_obj = Path(text_input)
@@ -44,7 +32,7 @@ class AsyncDownloader:
             return False
 
         if not os.access(path_obj, os.W_OK):
-            print(self.PERMISSION_DENIED_TEXT)
+            print(constants.PERMISSION_DENIED_TEXT)
             return False
 
         self.path = str(path_obj.resolve())
@@ -56,7 +44,7 @@ class AsyncDownloader:
         if not url:
             return False
         if parsed.scheme not in ("http", "https"):
-            print(f"{self.INCORRECT_URL_FORMAT_TEXT}: {url}")
+            print(f"{constants.INCORRECT_URL_FORMAT_TEXT}: {url}")
             return False
 
         self.max_len_of_url = max(self.max_len_of_url, len(url))
@@ -70,17 +58,17 @@ class AsyncDownloader:
         save_path = os.path.join(self.path, filename)
         success = False
 
-        for attempt in range(self.ATTEMPTS):
+        for attempt in range(constants.ATTEMPTS):
             try:
                 response = await asyncio.to_thread(
-                    requests.get, url, headers=self.headers, timeout=self.TIMEOUT
+                    requests.get, url, headers=self.headers, timeout=constants.TIMEOUT
                 )
                 response.raise_for_status()
                 with open(save_path, 'wb') as f:
                     f.write(response.content)
             except Exception as e:
                 # print(f"Ошибка при скачивании {url}: {e}")
-                await asyncio.sleep(self.TIME_DELAY)
+                await asyncio.sleep(constants.TIME_DELAY)
                 continue
             else:
                 success = True
@@ -103,7 +91,7 @@ class AsyncDownloader:
         path = urlparse(url).path
         filename = os.path.basename(path)
         if not filename:
-            filename = self.FILENAME_TO_SAVE_DEFAULT
+            filename = constants.FILENAME_TO_SAVE_DEFAULT
         return filename
 
     def print_result(self) -> None:
@@ -124,7 +112,7 @@ class AsyncDownloader:
         print(self.title)
         while not self.add_path_to_save():
             pass
-        print(self.URL_INPUT_TEXT)
+        print(constants.URL_INPUT_TEXT)
 
         while True:
             line = await asyncio.to_thread(input)
