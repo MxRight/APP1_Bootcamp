@@ -1,0 +1,1 @@
+MONSTERSNAMES = ["Вася", "Петя"] # в DATA слой?

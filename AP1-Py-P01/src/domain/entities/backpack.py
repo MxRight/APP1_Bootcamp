@@ -1,4 +1,3 @@
-
 class Backpack:
   MAXCAPACITY = 9
 
@@ -12,6 +11,9 @@ class Backpack:
 
   def del_item(self, item_id: int):
     pass
+
+  def has_item_type(self, cls):
+      return any(isinstance(i, cls) for i in self.items)  # проверяем есть ли в рюкзаке такой предмет нужного класса
 
   def select_item(self, item_id: int):
     self.items[item_id].use()
