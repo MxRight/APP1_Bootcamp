@@ -12,7 +12,7 @@
 снимок мира class WorldView:
 
 например: 
-
+```
 @dataclass
 class EntityView: # сущности с координатами
     x: int
@@ -31,3 +31,4 @@ class WorldView:
     entities: List[EntityView] массив игровых сущностей
     hud: HUDView # панель состояния игрока
     message: str # "Goblin takes 3 damage!"
+```
