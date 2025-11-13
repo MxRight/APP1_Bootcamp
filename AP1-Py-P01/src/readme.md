@@ -1,6 +1,12 @@
-### under construction - COMING SOON IN DECEMBER 1, 2025 
+# Rogue Remake (under construction - COMING SOON IN DECEMBER 1, 2025)
+Ремейк классической ролевой игры 1980/83 года
 
- ## Взаимодействие presentation и domain:
+## Архитектура проекта:
+- слой Domain (Бизнес логика)
+- слой View (Render + UI: отрисовка и пользовательский ввод)
+- слой Data (Хранения истории прошлых игр, таблица рекордов)
+
+ ## Взаимодействие слоев presentation и domain:
 
 ### Из presentation в domain
 
