@@ -1,5 +1,5 @@
-from domain.entities.gameobject import Player
-from domain.entities.level import Level
+from .entities.gameobject import Player
+from .entities.level import Level
 
 
 class Game:
