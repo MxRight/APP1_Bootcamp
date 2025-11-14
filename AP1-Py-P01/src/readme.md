@@ -1,10 +1,13 @@
-# Rogue Remake (under construction - COMING SOON IN DECEMBER 1, 2025)
+# Rogue Remake (under construction - COMING SOON - DECEMBER 1, 2025)
 Ремейк классической ролевой игры 1980/83 года
 
-## Архитектура проекта:
-- слой Domain (Бизнес логика)
-- слой View (Render + UI: отрисовка и пользовательский ввод)
-- слой Data (Хранения истории прошлых игр, таблица рекордов)
+## Архитектура проекта, слои:
+- Domain (Бизнес логика)
+- View (отрисовка и пользовательский ввод):
+    * Render
+    * UI
+- Datalayer (Хранения истории прошлых игр, таблица рекордов):
+    * ->JSON->
 
  ## Взаимодействие слоев presentation и domain:
 
@@ -16,8 +19,7 @@
 ### Из domain в presentation
 
 снимок мира class WorldView:
-
-например: 
+ 
 ```
 @dataclass
 class EntityView: # сущности с координатами
@@ -38,3 +40,4 @@ class WorldView:
     hud: HUDView # панель состояния игрока
     message: str # "Goblin takes 3 damage!"
 ```
+### datalayer
