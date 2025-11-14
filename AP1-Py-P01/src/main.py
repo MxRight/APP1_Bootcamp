@@ -2,6 +2,7 @@ import pyfiglet
 import time
 import os
 import constants
+from view.render2d.render import Render2d
 
 class Game:
     def show_title(self):
@@ -18,6 +19,9 @@ class Game:
 
     def start(self):
         self.show_title()
+        render2d = Render2d()
+        render2d.start()
+
 
 
 if __name__ == '__main__':
