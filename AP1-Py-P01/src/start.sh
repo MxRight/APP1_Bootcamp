@@ -1,1 +1,1 @@
- gnome-terminal --full-screen -- bash -c "source .venv/bin/activate; python3 main.py"
+ gnome-terminal --full-screen -- bash -c "source .venv/bin/activate; python3 main.py; exec bash"
