@@ -5,7 +5,7 @@ import time
 import os
 import constants
 from view.render2d.render import Render2d
-from view.render2d.img import screen
+from view.render2d.img_output import screen
 from view.input import GameInput
 
 
