@@ -37,10 +37,6 @@ fi
 
 echo ""
 echo "Установка завершена! Окружение активировано."
-echo "Чтобы активировать его позже вручную:"
-echo ""
-echo "   source .venv/bin/activate"
-echo ""
 echo "После активации проект можно запустить командой:"
-echo "   python3 main.py"
+echo "   ./start
 echo ""
