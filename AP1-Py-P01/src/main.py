@@ -1,8 +1,13 @@
+import curses
+
 import pyfiglet
 import time
 import os
 import constants
 from view.render2d.render import Render2d
+from view.render2d.img import screen
+from view.input import GameInput
+
 
 class Game:
     def show_title(self):
@@ -10,20 +15,25 @@ class Game:
         for text, color, font in constants.GAME_TITLE:
             self.print_color_title(text, color, font)
 
-
-    def print_color_title(self, text:str, color="red", font="big", delay=0.6):
-        if color in constants.COLORS and (font=="big" or font=="small"):
+    def print_color_title(self, text: str, color="red", font="big", delay=0.6):
+        if color in constants.COLORS and (font == "big" or font == "small"):
             text_art = pyfiglet.figlet_format(text, font=font)
             print(constants.COLORS[color] + text_art + constants.COLORS['reset'])
             time.sleep(delay)
 
     def start(self):
-        self.show_title()
-        render2d = Render2d()
-        render2d.start()
 
+        # self.show_title()
+        screen.start()
+
+        # render2d = Render2d()
+        # render2d.start()
 
 
 if __name__ == '__main__':
     game = Game()
     game.start()
+
+    game_input = GameInput()
+    game_input.wait_for_enter()
+    # curses.wrapper(game_input.start)
