@@ -1,5 +1,5 @@
-from gameobject import Creature
-from backpack import Backpack
+from .gameobject import Creature
+from .backpack import Backpack
 
 class Player(Creature):
     STARTHP = 100

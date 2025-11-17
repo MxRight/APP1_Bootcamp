@@ -1,4 +1,4 @@
-from map_tile import Tile
+from .map_tile import Tile
 
 class GameMap:
     def __init__(self, width, height):

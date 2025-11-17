@@ -23,10 +23,12 @@ class Render2d:
         for i, (name, (fg, bg)) in enumerate(COLORS.items(), start=1):
             curses.init_pair(i, fg, bg)
 
-    def draw_tile(self, tile_name, x, y):
-        tile = TILES[tile_name]
-        color_id = self.color_id(tile.color)
-        self.stdscr.addstr(y, x, tile.symbol, curses.color_pair(color_id))
+    def draw_tiles(self, stdscr, tiles):
+        for y, row in enumerate(tiles):
+            for x, tile in enumerate(row):
+                symbol = TILES[tile.kind]
+                color_id = self.color_id(tile.color)
+                stdscr.addch(y, x, symbol, curses.color_pair(color_id))
 
     def draw_enemy(self, enemy_name, x, y):
         enemy = ENEMIES[enemy_name]
