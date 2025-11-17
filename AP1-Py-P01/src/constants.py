@@ -1,7 +1,9 @@
 WIDTH = 180
 HEIGHT = 40
-MIN_ROOM_SIZE = 6
-MAX_ROOM_SIZE = 10
+MIN_ROOM_W_SIZE = 6
+MAX_ROOM_W_SIZE = 20
+MIN_ROOM_H_SIZE = 6
+MAX_ROOM_H_SIZE = 16
 
 GAME_TITLE = [("ROGUE", "red", "big"), ("REMAKE 2025", "cyan", "small"), ("by Renatann", "green", "small")]
 

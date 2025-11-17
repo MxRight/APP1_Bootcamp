@@ -14,19 +14,31 @@ class Level:
         self.rooms: list[Room] = []
         self.entities = []  # враги, предметы, игрок и т. д.
 
-    def gen_level(self, min_room_size: int = 6, max_room_size: int = 10):
-        """Создаёт точно 9 комнат и соединительные туннели."""
+    def gen_level(self,
+                  min_width, max_width,
+                  min_height, max_height):
+        """Создаёт ровно QUANTITY_OF_ROOMS комнат.
+        Размеры зависят от заданных диапазонов и уровня."""
         target_rooms = self.QUANTITY_OF_ROOMS
         attempts = 0
-        max_attempts = 200  # чтобы не попасть в бесконечный цикл
+        max_attempts = 300
+
+        # коэффициент "глубины" уровня: глубже → крупнее помещения
+        scale = 1.0 + (self.number - 1) * 0.05
+        scale = min(scale, 1.5)  # ограничим рост, чтобы не вышло за границы карты
 
         while len(self.rooms) < target_rooms and attempts < max_attempts:
             attempts += 1
 
-            w = random.randint(min_room_size, max_room_size)
-            h = random.randint(min_room_size, max_room_size)
+            # отдельные диапазоны ширины и высоты + масштабирование
+            w = int(random.randint(min_width, max_width) * scale)
+            h = int(random.randint(min_height, max_height) * scale)
 
-            # Случайное положение, не выходя за границы карты
+            # чтобы не выйти за пределы карты:
+            if w >= self.map.width - 4 or h >= self.map.height - 4:
+                # комната получилась слишком большой, пересчитаем заново
+                continue
+
             x = random.randint(1, self.map.width - w - 2)
             y = random.randint(1, self.map.height - h - 2)
 
@@ -36,17 +48,14 @@ class Level:
                 x2=x + w, y2=y + h
             )
 
-            # проверка пересечения
+            # избегаем пересечений
             if any(new_room.intersects(other) for other in self.rooms):
                 continue
 
-            # прорубаем комнату
             self.carve_room(new_room)
 
-            # соединяем с предыдущей
             if self.rooms:
-                previous = self.rooms[-1]
-                self.connect_rooms(previous, new_room)
+                self.connect_rooms(self.rooms[-1], new_room)
 
             self.rooms.append(new_room)
 

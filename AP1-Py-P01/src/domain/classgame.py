@@ -1,7 +1,7 @@
 from domain.entities.player import Player
 from domain.entities.level import Level
 from application.view_models import WorldView, TileView, EntityView, HUDView
-from constants import WIDTH, HEIGHT, MIN_ROOM_SIZE, MAX_ROOM_SIZE
+from constants import WIDTH, HEIGHT, MIN_ROOM_W_SIZE, MAX_ROOM_W_SIZE, MIN_ROOM_H_SIZE, MAX_ROOM_H_SIZE
 
 
 
@@ -17,7 +17,7 @@ class Game:
         self.player = Player()
         self.player.name = player_name
         self.level = Level(WIDTH, HEIGHT, self.num_of_level)
-        self.level.gen_level(MIN_ROOM_SIZE, MAX_ROOM_SIZE)
+        self.level.gen_level(MIN_ROOM_W_SIZE, MAX_ROOM_W_SIZE, MIN_ROOM_H_SIZE, MAX_ROOM_H_SIZE)
         self.player.start()
 
     def load_game(self):
