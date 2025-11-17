@@ -4,9 +4,9 @@ import pyfiglet
 import time
 import os
 import constants
-from view.render2d.render import Render2d
-from view.render2d.img_output import screen
-from view.input import GameInput
+from presentation.render2d.render import Render2d
+from presentation.render2d.img_output import screen
+from presentation.input import GameInput
 
 
 class Game:
