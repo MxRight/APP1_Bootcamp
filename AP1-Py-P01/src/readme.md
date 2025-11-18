@@ -3,41 +3,56 @@
 
 ## Архитектура проекта, слои:
 - Domain (Бизнес логика)
-- View (отрисовка и пользовательский ввод):
+- Presentation (отрисовка и пользовательский ввод):
     * Render
     * UI
+- Application (содержит классы-посредники между слоями Domain и Presentation):
+     * class WorldView
+  
 - Datalayer (Хранения истории прошлых игр, таблица рекордов):
     * ->JSON->
 
- ## Взаимодействие слоев presentation и domain:
+ ## Взаимодействие между слоями:
 
 ### Из presentation в domain
 
-ввод:
+модуль input.py обрабатывает нажатие кнопок и передает в domain в виде строк:
 например: "move_up", "move_down", "attack", "pickup", "quit"...
 
 ### Из domain в presentation
 
-снимок мира class WorldView:
+В слое Application описан класс WorldView экземпляр которого создается в слое domain и передается в слой Presentation.
+Экземпляр класса WorldView представляет из себя снимок мира, с расположением в данный момент времени комнат, корридоров и сущностей, а также данные панели игрока и сообщений:
  
 ```
 @dataclass
-class EntityView: # сущности с координатами
+class TileView:
+    # класс на вырост для 3d и т.д.
+    kind: str  # 'floor', 'wall', 'door', etc.
+
+
+@dataclass
+class EntityView:  # сущности с координатами
     x: int
     y: int
     kind: str  # 'player', 'enemy', 'snake', 'item'
 
+
 @dataclass
-class HUDView: # панель состояния игрока
+class HUDView:  # панель состояния игрока
     hp: int
     level: int
-    treasure: int 
+    treasure: int
+
 
 @dataclass
 class WorldView:
-    tiles: list[list[str]]  карта местности
-    entities: List[EntityView] массив игровых сущностей
-    hud: HUDView # панель состояния игрока
-    message: str # "Goblin takes 3 damage!"
+    tiles: list[list[TileView]]  # двумерный массив с картой местности
+    entities: list[EntityView]  # массив игровых сущностей
+    hud: HUDView  # панель состояния игрока
+    message: str  # "Goblin takes 3 damage!"
 ```
+
 ### datalayer
+Слой для хранения истории прошлых игр, таблицы рекордов
+В данной версии всё будет хранится в формате JSON/
