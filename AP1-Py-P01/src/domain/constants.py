@@ -1,0 +1,20 @@
+PLAYER_CODE = "hero"
+
+FLOOR_TILE_CODE = "floor"
+WALL_TILE_CODE = "wall"
+PASSAGE_TILE_CODE = "passage"
+DOOR_TILE_CODE = "door"
+
+ZOMBIE_ENEMY_CODE = "zombie"
+VAMPIRE_ENEMY_CODE = "vampire"
+GHOST_ENEMY_CODE = "ghost"
+OGRE_ENEMY_CODE = "ogre"
+SNAKE_ENEMY_CODE = "snake"
+MIMIC_ENEMY_CODE = "mimic"
+
+TREASURE_ITEM_CODE = "treasure"
+FOOD_ITEM_CODE = "food"
+POTION_ITEM_CODE = "potion"
+SCROLL_ITEM_CODE = "scroll"
+SWORD_ITEM_CODE = "sword"
+KEY_ITEM_CODE = "key"
