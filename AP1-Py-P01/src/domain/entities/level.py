@@ -1,6 +1,8 @@
 import random
 from .room import Room
 from .game_map import Tile, GameMap
+from application.constants import FLOOR_TILE_CODE, PASSAGE_TILE_CODE
+from .player import Player
 
 
 class Level:
@@ -23,7 +25,7 @@ class Level:
         attempts = 0
         max_attempts = 300
 
-        # коэффициент "глубины" уровня: глубже → крупнее помещения
+        # коэффициент "глубины" уровня: чем глубже тем крупнее помещения
         scale = 1.0 + (self.number - 1) * 0.05
         scale = min(scale, 1.5)  # ограничим рост, чтобы не вышло за границы карты
 
@@ -64,6 +66,7 @@ class Level:
          #   print(f"[WARNING] Created only {len(self.rooms)} rooms out of {target_rooms}")
 
         # враги и предметы
+
         self.drop_enemy()
         self.drop_items()
 
@@ -73,17 +76,17 @@ class Level:
         """Вырезает помещение на карте (пол)."""
         for y in range(room.y1 + 1, room.y2):
             for x in range(room.x1 + 1, room.x2):
-                self.map.tiles[y][x] = Tile(True, True, "floor")
+                self.map.tiles[y][x] = Tile(True, True, FLOOR_TILE_CODE)
 
     def carve_h_tunnel(self, x1: int, x2: int, y: int):
         """Горизонтальный туннель"""
         for x in range(min(x1, x2), max(x1, x2) + 1):
-            self.map.tiles[y][x] = Tile(True, True, "floor")
+            self.map.tiles[y][x] = Tile(True, True, PASSAGE_TILE_CODE)
 
     def carve_v_tunnel(self, y1: int, y2: int, x: int):
         """Вертикальный туннель"""
         for y in range(min(y1, y2), max(y1, y2) + 1):
-            self.map.tiles[y][x] = Tile(True, True, "floor")
+            self.map.tiles[y][x] = Tile(True, True, PASSAGE_TILE_CODE)
 
     def connect_rooms(self, room_a: Room, room_b: Room):
         """Соединяет центры двух комнат случайным порядком коридоров."""
@@ -96,6 +99,7 @@ class Level:
         else:
             self.carve_v_tunnel(ay, by, ax)
             self.carve_h_tunnel(ax, bx, by)
+
 
 
     def drop_enemy(self):
