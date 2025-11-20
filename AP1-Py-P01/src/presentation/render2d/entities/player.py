@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class PlayerView:
+class PlayerRender:
     symbol: str
     color: str
 
 
 PLAYER = {
-    "hero": PlayerView("@", "yellow"),
+    "player": PlayerRender("@", "yellow"),
 }
