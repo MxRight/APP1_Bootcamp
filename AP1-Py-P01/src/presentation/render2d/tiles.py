@@ -2,14 +2,14 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class TileView:
+class TileRender:
     symbol: str
     color: str
 
 
 TILES = {
-    "floor": TileView(".", "white"),
-    "wall": TileView("#", "yellow"),
-    "passage": TileView("=", "yellow"),
-    "door": TileView("+", "magenta"),
+    "floor": TileRender(".", "white"),
+    "wall": TileRender("#", "yellow"),
+    "passage": TileRender(".", "white"),
+    "door": TileRender("+", "magenta"),
 }
