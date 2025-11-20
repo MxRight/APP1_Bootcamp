@@ -3,11 +3,13 @@ from random import choice
 from item import Treasure
 from domain.entities.constants import MONSTERSNAMES
 
+
+# необходимо инициилизировать кодовые переенные
+
 class Enemy(Creature):
 
-
-    def __init__(self):
-        super().__init__()
+    def __init__(self, x, y):
+        super().__init__(x, y)
         self.hostility = None  # враждебность
         self.behaviour = None  # поведение
 
@@ -46,4 +48,8 @@ class Ogre(Enemy):
 
 
 class Serpent(Enemy):
+    pass
+
+
+class Mimic(Enemy):
     pass
