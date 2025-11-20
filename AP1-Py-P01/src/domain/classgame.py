@@ -1,7 +1,7 @@
 from domain.entities.player import Player
 from domain.entities.level import Level
 from application.view_models import WorldView, TileView, EntityView, HUDView
-from constants import WIDTH, HEIGHT, MIN_ROOM_W_SIZE, MAX_ROOM_W_SIZE, MIN_ROOM_H_SIZE, MAX_ROOM_H_SIZE
+from game_setting import WIDTH, HEIGHT, MIN_ROOM_W_SIZE, MAX_ROOM_W_SIZE, MIN_ROOM_H_SIZE, MAX_ROOM_H_SIZE
 
 
 
@@ -14,10 +14,12 @@ class Game:
 
     def new_game(self, player_name: str):
         self.num_of_level = 1
-        self.player = Player()
-        self.player.name = player_name
+
+
         self.level = Level(WIDTH, HEIGHT, self.num_of_level)
         self.level.gen_level(MIN_ROOM_W_SIZE, MAX_ROOM_W_SIZE, MIN_ROOM_H_SIZE, MAX_ROOM_H_SIZE)
+        x, y = self.level.rooms[0].center()
+        self.player = Player(player_name, x, y)
         self.player.start()
 
     def load_game(self):
@@ -50,6 +52,6 @@ class Game:
             EntityView(e.x, e.y, e.kind)
             for e in [self.player] + self.level.entities
         ]
-        hud = HUDView(hp=self.player.hp, level=self.num_of_level, treasure=self.treasure)
+        hud = HUDView(hp=self.player.health, level=self.num_of_level, treasure=self.treasure)
 
         return WorldView(tiles=tiles, entities=entities, hud=hud, message='временное сообщение')
