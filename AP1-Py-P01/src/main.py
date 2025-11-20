@@ -3,7 +3,7 @@ import curses
 import pyfiglet
 import time
 import os
-import constants
+import game_setting
 from presentation.render2d.render import Render2d
 from presentation.render2d.img_output import screen
 from presentation.input import GameInput
@@ -12,13 +12,13 @@ from presentation.input import GameInput
 class Game:
     def show_title(self):
         os.system('cls' if os.name == 'nt' else 'clear')
-        for text, color, font in constants.GAME_TITLE:
+        for text, color, font in game_setting.GAME_TITLE:
             self.print_color_title(text, color, font)
 
     def print_color_title(self, text: str, color="red", font="big", delay=0.6):
-        if color in constants.COLORS and (font == "big" or font == "small"):
+        if color in game_setting.COLORS and (font == "big" or font == "small"):
             text_art = pyfiglet.figlet_format(text, font=font)
-            print(constants.COLORS[color] + text_art + constants.COLORS['reset'])
+            print(game_setting.COLORS[color] + text_art + game_setting.COLORS['reset'])
             time.sleep(delay)
 
     def start(self):
