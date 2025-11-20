@@ -1,4 +1,4 @@
-PLAYER_CODE = "hero"
+PLAYER_CODE = "player"
 
 FLOOR_TILE_CODE = "floor"
 WALL_TILE_CODE = "wall"
