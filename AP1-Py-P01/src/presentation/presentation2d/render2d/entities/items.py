@@ -11,7 +11,7 @@ ITEMS = {
     "treasure": ItemRender("$", "yellow"),  # gold
     "food": ItemRender("%", "magenta"),
     "potion": ItemRender("!", "blue"),
-    "scroll": ItemRender("?", "white"),
+    "scroll": ItemRender("*", "white"),
     "sword": ItemRender(")", "yellow"),
     "key": ItemRender("~", "cyan"),
 }

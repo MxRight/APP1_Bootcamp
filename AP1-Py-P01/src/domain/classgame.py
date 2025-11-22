@@ -1,3 +1,4 @@
+from domain.entities.enemy import Enemy
 from domain.entities.player import Player
 from domain.entities.level import Level
 from application.view_models import WorldView, TileView, EntityView, HUDView
@@ -21,6 +22,7 @@ class Game:
         x, y = self.level.rooms[0].center()
         self.player = Player(player_name, x, y)
         self.player.start()
+        self.level.populate_rooms(self.num_of_level)
 
     def load_game(self):
         pass
@@ -34,6 +36,7 @@ class Game:
     def next_level(self):
         self.num_of_level += 1
         self.level.gen_level(self.num_of_level)
+        self.level.populate_rooms(self.num_of_level)
 
     def victory(self):
         pass
@@ -56,39 +59,75 @@ class Game:
         tile = self.level.map.tiles[ny][nx]
         if tile.kind in (WALL_TILE_CODE,):
             if entity is self.player:
-                self.update_message("Ты упираешься в стену.")
+                self.update_message("Вы упираетесь в стену.")
+
             return False
         if tile.kind == DOOR_TILE_CODE:
             if entity is self.player:
                 self.update_message("Дверь закрыта.")
             return False
 
-        """
+
         # Проверка столкновений с другими существами
         for e in [self.player] + self.level.entities:
             if e is entity:
                 continue
             if e.x == nx and e.y == ny:
-                # можно обработать тип взаимодействия
-                if entity is self.player:
-                    self.update_message(f"Путь закрыт существом: {e.kind}.")
-                return False
-        """
+                if isinstance(e, Enemy):
+                    if entity is self.player:
+                        self.update_message(f"Путь закрыт существом: {e.name}.")
+                    return False
+
 
         return True
 
     def try_move_entity(self, entity, dx: int, dy: int):
         """Двигает сущность, если движение возможно."""
-        if self.can_move(entity, dx, dy):
-            entity.move(dx, dy)
-            if entity is self.player:
-                self.update_message("")  # очистить старое сообщение
-        # иначе player.message уже выставлено в can_move()
+        if not self.can_move(entity, dx, dy):
+            return
+
+        # вычисляем новые координаты
+        nx, ny = entity.x + dx, entity.y + dy
+        entity.move(dx, dy)
+
+        # если это игрок — проверяем, есть ли предмет
+        if entity is self.player:
+            self.check_for_item(nx, ny)
+
+        #self.update_message("")
+
+    def check_for_item(self, x: int, y: int):
+        """Проверяет наличие предметов и обрабатывает их подбор."""
+        # ищем предмет на этой позиции
+        for item in list(self.level.entities):  # делаем копию, т.к. будем удалять
+            if getattr(item, "kind", "") and item.x == x and item.y == y:
+                # если это сокровище
+                if item.kind == "treasure":
+                    self.pickup_treasure(item)
+                    break
+                # если это еда, свиток и т.п. — теоретически другие варианты
+                else:
+                    self.pickup_generic(item)
+                    break
+
+    def pickup_treasure(self, item):
+        """Подбор сокровища."""
+        cost = item.cost
+        self.treasure += cost                # увеличиваем счётчик
+        self.level.entities.remove(item)     # убираем предмет из уровня
+        self.update_message(f"Вы подняли сокровище, стоимостью {cost} золотых монет!")
+
+    def pickup_generic(self, item):
+        """Подбор других предметов (пока просто удаляем)."""
+        self.level.entities.remove(item)
+        self.update_message(f"Вы подбираете {item.kind.lower()}.")
 
     def handle_command(self, cmd: str):
         """Обработка команд от пользователя из слоя presentation"""
         if cmd is None:
             return
+
+        self.update_message("")
 
         if cmd == "quit":
             self.running = False

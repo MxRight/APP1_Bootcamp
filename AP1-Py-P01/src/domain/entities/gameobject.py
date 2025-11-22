@@ -14,9 +14,9 @@ class GameObject:
 
 
 class Creature(GameObject):
-    def __init__(self, name, x, y):
+    def __init__(self, x, y):
         super().__init__(x, y)
-        self.name = name
+        self.name = None
         self.health = None
         self.dexterity = None
         self.strength = None

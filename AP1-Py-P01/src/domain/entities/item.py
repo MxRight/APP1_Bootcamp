@@ -1,17 +1,11 @@
-from gameobject import GameObject
+import random
+
+from .gameobject import GameObject
+from application.constants import FOOD_ITEM_CODE, TREASURE_ITEM_CODE, SCROLL_ITEM_CODE, KEY_ITEM_CODE, SWORD_ITEM_CODE, POTION_ITEM_CODE
 
 class Item(GameObject):
-    def __init__(self):
-        super().__init__()
-        self.type_of_item = None  # может быть хватит self.type?
 
-    def set_type_of_item(self):
-        self.type_of_item = f"{self.__class__.__name__}"
-
-    def create(self, x, y):
-        self.set_type_of_item()
-        self.x = x
-        self.y = y
+    def create(self):
         self.active = True
 
     def pick_up(self):
@@ -24,26 +18,39 @@ class UseItem(Item):
 
 
 class Treasure(Item):
-    def set_cost(self):
-        # random * level
-        pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = TREASURE_ITEM_CODE
+        self.cost = self.set_cost()
+
+    def set_cost(self, num = 1):
+        return random.randint(1, 10 * num)
+
 
 
 class Food(UseItem):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = FOOD_ITEM_CODE
 
 
 class Elixir(UseItem):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = POTION_ITEM_CODE
 
 
 class Scroll(UseItem):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = SCROLL_ITEM_CODE
 
 
 class Weapon(UseItem):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = Weapon
+        self.type = None
         self.strengh = None
 
     def drop_weapon(self):

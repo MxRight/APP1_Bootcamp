@@ -1,7 +1,7 @@
 import curses
 from .render2d.render import Render2d
 from .controller2d.controller2d import Controller2d
-from .constants import MENU_ITEMS, SUBTITLE, TITLE
+from .constants import MENU_ITEMS, SUBTITLE, TITLE, QUIT_MESSAGE
 
 
 class GameUI:
@@ -11,6 +11,8 @@ class GameUI:
         self.world = world
         self.renderer = Render2d()
         self.controller = Controller2d()
+        self.h = None
+        self.w = None
 
     def run(self):
         """Запускает curses‑сессию и главный игровой цикл"""
@@ -22,6 +24,8 @@ class GameUI:
         stdscr.clear()
         curses.curs_set(0)
         h, w = stdscr.getmaxyx()
+        self.h = h
+        self.w = w
 
         title = TITLE
         subtitle = SUBTITLE
@@ -131,15 +135,17 @@ class GameUI:
         self.show_intro(stdscr)
 
         while self.world.running:
-            world_view = self.world.to_view()
-            self.renderer.draw_world(stdscr, world_view)
+
             command = self.controller.handle_input(stdscr)
             if command:
                 self.world.handle_command(command)
             if command == "quit":
                 break
 
+            world_view = self.world.to_view()
+            self.renderer.draw_world(stdscr, world_view)
+
         stdscr.clear()
-        stdscr.addstr(0, 0, "Вы покинули подземелье. До новых встреч, герой!")
+        stdscr.addstr(self.h//2, self.w//2 - len(QUIT_MESSAGE)//2, QUIT_MESSAGE, curses.A_BOLD)
         stdscr.refresh()
         stdscr.getch()

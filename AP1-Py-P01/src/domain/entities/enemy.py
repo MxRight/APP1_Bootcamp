@@ -1,8 +1,8 @@
-from gameobject import Creature
+from .gameobject import Creature
 from random import choice
-from item import Treasure
+from .item import Treasure
 from domain.entities.constants import MONSTERSNAMES
-
+from application.constants import *
 
 # необходимо инициилизировать кодовые переенные
 
@@ -13,9 +13,8 @@ class Enemy(Creature):
         self.hostility = None  # враждебность
         self.behaviour = None  # поведение
 
-    def create(self, room_id):
+    def create(self):
         self.give_name()
-        self.drop_in_room(room_id)
         self.active = True
 
     def give_name(self):
@@ -30,26 +29,41 @@ class Enemy(Creature):
 
         Treasure().create(self.x, self.y)
 
+    def __repr__(self):
+        return f'{self.kind} {self.name}'
 
-class Zomby(Enemy):
-    pass
+
+class Zombie(Enemy):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = ZOMBIE_ENEMY_CODE
 
 
 class Vampire(Enemy):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = VAMPIRE_ENEMY_CODE
 
 
 class Ghost(Enemy):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = GHOST_ENEMY_CODE
 
 
 class Ogre(Enemy):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = OGRE_ENEMY_CODE
 
 
 class Serpent(Enemy):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = SNAKE_ENEMY_CODE
 
 
 class Mimic(Enemy):
-    pass
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.kind = MIMIC_ENEMY_CODE

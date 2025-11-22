@@ -2,7 +2,10 @@ import random
 from .room import Room
 from .game_map import Tile, GameMap
 from application.constants import FLOOR_TILE_CODE, PASSAGE_TILE_CODE
-from .player import Player
+from ..game_balance import BASE_ENEMIES, BASE_ITEMS
+from .enemy import Enemy
+from .item import Item
+import datetime
 
 
 class Level:
@@ -62,15 +65,8 @@ class Level:
             self.rooms.append(new_room)
 
         # если попытки исчерпаны, а комнат меньше — просто сообщим
-        #if len(self.rooms) < target_rooms:
-         #   print(f"[WARNING] Created only {len(self.rooms)} rooms out of {target_rooms}")
-
-        # враги и предметы
-
-        self.drop_enemy()
-        self.drop_items()
-
-    # --------------------- вырезание ходов ---------------------
+        # if len(self.rooms) < target_rooms:
+        #   print(f"[WARNING] Created only {len(self.rooms)} rooms out of {target_rooms}")
 
     def carve_room(self, room: Room):
         """Вырезает помещение на карте (пол)."""
@@ -100,17 +96,61 @@ class Level:
             self.carve_v_tunnel(ay, by, ax)
             self.carve_h_tunnel(ax, bx, by)
 
+    def random_free_in_room(self, room):
+        """Находит случайную свободную клетку в пределах комнаты."""
+        while True:
+            x = random.randint(room.x1 + 1, room.x2 - 2)
+            y = random.randint(room.y1 + 1, room.y2 - 2)
+            # Если клетка проходимая и пустая
+            if self.map.tiles[y][x].kind == "floor" and not any(
+                    e.x == x and e.y == y for e in self.entities
+            ):
+                return x, y
 
+    def populate_rooms(self, level_num: int):
+        """Распределяет монстров и предметы по комнатам (первая комната пустая)."""
+        if not self.rooms or len(self.rooms) < 2:
+            return
 
-    def drop_enemy(self):
-        """Пока просто заглушка — сюда добавится логика спауна врагов."""
-        # Например:
-        # for room in self.rooms[1:]:
-        #     x, y = room.center()
-        #     self.entities.append(Enemy("goblin", x, y))
-        pass
+        # первая комната (игрок) остаётся пустой
+        rooms_to_fill = self.rooms[1:]
+        self.entities = []
 
-    def drop_items(self):
-        """Пока просто заглушка — сюда добавится логика появления предметов."""
-        # Аналогично
-        pass
+        # коэффициенты сложности
+        enemy_factor = 1 + (level_num - 1) * 0.3
+        item_factor = max(0.5, 1.3 - level_num * 0.1)
+
+        # фильтруем доступных врагов и предметы по уровню
+        available_enemies = [
+            (k, v) for k, v in BASE_ENEMIES.items()
+            if v["min_level"] <= level_num
+        ]
+        available_items = [
+            (k, v) for k, v in BASE_ITEMS.items()
+            if v["min_level"] <= level_num
+        ]
+
+        for room in rooms_to_fill:
+            density = random.uniform(0.5, 1.5)
+
+            num_enemies = max(0, int(random.randint(0, 2) + enemy_factor * density))
+            if available_enemies and num_enemies:
+                names, weights = zip(*[(k, data["chance"]) for k, data in available_enemies])
+                for _ in range(num_enemies):
+                    enemy_key = random.choices(names, weights=weights, k=1)[0]
+                    enemy_data = BASE_ENEMIES[enemy_key]
+                    enemy_class = enemy_data["class"]
+                    x, y = self.random_free_in_room(room)
+                    enemy = enemy_class(x, y)
+                    enemy.create()
+                    self.entities.append(enemy)
+
+            num_items = max(0, int(random.randint(0, 1) + item_factor * random.random()))
+            if available_items and num_items:
+                # создаём списки для выбора по весам
+                classes, weights = zip(*[(cls, data["chance"]) for cls, data in available_items])
+
+                for _ in range(num_items):
+                    item_class = random.choices(classes, weights=weights, k=1)[0]
+                    x, y = self.random_free_in_room(room)
+                    self.entities.append(item_class(x, y))

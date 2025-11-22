@@ -9,7 +9,8 @@ class Player(Creature):
     STARTSTRENGTH = 9
 
     def __init__(self, name, x, y):
-        super().__init__(name, x, y)
+        super().__init__(x, y)
+        self.name = name
         self.max_health = None
         self.weapon = None
         self.backpack = Backpack()
