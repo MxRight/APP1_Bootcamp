@@ -2,6 +2,7 @@ from domain.entities.player import Player
 from domain.entities.level import Level
 from application.view_models import WorldView, TileView, EntityView, HUDView
 from game_setting import WIDTH, HEIGHT, MIN_ROOM_W_SIZE, MAX_ROOM_W_SIZE, MIN_ROOM_H_SIZE, MAX_ROOM_H_SIZE
+from application.constants import WALL_TILE_CODE, DOOR_TILE_CODE
 
 
 class Game:
@@ -40,6 +41,50 @@ class Game:
     def update_message(self, text):
         self.message = text
 
+    def can_move(self, entity, dx: int, dy: int) -> bool:
+        """Проверяет, может ли сущность переместиться на dx, dy."""
+        x, y = entity.x, entity.y
+        nx, ny = x + dx, y + dy
+
+        map_h = len(self.level.map.tiles)
+        map_w = len(self.level.map.tiles[0])
+        if not (0 <= nx < map_w and 0 <= ny < map_h):
+            if entity is self.player:
+                self.update_message("Дальше — пустота.")
+            return False
+
+        tile = self.level.map.tiles[ny][nx]
+        if tile.kind in (WALL_TILE_CODE,):
+            if entity is self.player:
+                self.update_message("Ты упираешься в стену.")
+            return False
+        if tile.kind == DOOR_TILE_CODE:
+            if entity is self.player:
+                self.update_message("Дверь закрыта.")
+            return False
+
+        """
+        # Проверка столкновений с другими существами
+        for e in [self.player] + self.level.entities:
+            if e is entity:
+                continue
+            if e.x == nx and e.y == ny:
+                # можно обработать тип взаимодействия
+                if entity is self.player:
+                    self.update_message(f"Путь закрыт существом: {e.kind}.")
+                return False
+        """
+
+        return True
+
+    def try_move_entity(self, entity, dx: int, dy: int):
+        """Двигает сущность, если движение возможно."""
+        if self.can_move(entity, dx, dy):
+            entity.move(dx, dy)
+            if entity is self.player:
+                self.update_message("")  # очистить старое сообщение
+        # иначе player.message уже выставлено в can_move()
+
     def handle_command(self, cmd: str):
         """Обработка команд от пользователя из слоя presentation"""
         if cmd is None:
@@ -50,15 +95,15 @@ class Game:
             self.update_message("Игра завершена.")
             return
 
-        # движение
-        if cmd == "move_up":  # вынести в application, импорировать переменные сюда и в слой presentation2d
-            self.player.move(0, -1)
+        # движение: вынести "текстовые команды" в application, импорировать переменные сюда и в слой presentation2d
+        if cmd == "move_up":
+            self.try_move_entity(self.player, 0, -1)
         elif cmd == "move_down":
-            self.player.move(0, 1)
+            self.try_move_entity(self.player, 0, 1)
         elif cmd == "move_left":
-            self.player.move(-1, 0)
+            self.try_move_entity(self.player, -1, 0)
         elif cmd == "move_right":
-            self.player.move(1, 0)
+            self.try_move_entity(self.player, 1, 0)
 
     def to_view(self) -> WorldView:
         tiles = []
@@ -76,4 +121,4 @@ class Game:
         ]
         hud = HUDView(hp=self.player.health, level=self.num_of_level, treasure=self.treasure)
 
-        return WorldView(tiles=tiles, entities=entities, hud=hud, message='временное сообщение')
+        return WorldView(tiles=tiles, entities=entities, hud=hud, message=self.message)
