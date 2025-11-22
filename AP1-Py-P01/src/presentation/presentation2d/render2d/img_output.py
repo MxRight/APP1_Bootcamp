@@ -1,4 +1,3 @@
-import curses
 import os
 from rich.console import Console
 from rich_pixels import Pixels

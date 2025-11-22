@@ -9,7 +9,7 @@ class TileRender:
 
 TILES = {
     "floor": TileRender(".", "white"),
-    "wall": TileRender("#", "yellow"),
+    "wall": TileRender("█", "yellow"),
     "passage": TileRender(".", "white"),
     "door": TileRender("+", "magenta"),
 }
