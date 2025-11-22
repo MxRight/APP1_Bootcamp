@@ -1,12 +1,10 @@
 import curses
 
-
 class Controller2d:
     """Обрабатывает ввод игрока и возвращает команды для domain."""
 
     def handle_input(self, stdscr):
         key = stdscr.getch()
-
         # выход
         if key in (ord("q"), 27):  # q или ESC
             return "quit"
