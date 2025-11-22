@@ -8,7 +8,6 @@ def main():
     screen.start()
     time.sleep(2)
     game = Game()
-    game.new_game("Maxim")
     ui = GameUI(game)
 
     ui.run()
