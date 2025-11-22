@@ -21,10 +21,6 @@ class Creature(GameObject):
         self.dexterity = None
         self.strength = None
 
-    def move(self, dx: int, dy: int):
-        self.x += dx
-        self.y += dy
-
     def fight(self):
         pass
 
