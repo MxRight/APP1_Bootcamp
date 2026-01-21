@@ -16,7 +16,7 @@
 
 ### Из presentation в domain
 
-модуль input.py обрабатывает нажатие кнопок и передает в domain в виде строк:
+модуль input.py обрабатывает нажатие кнопок и передает в domain коды в виде строк:
 например: "move_up", "move_down", "attack", "pickup", "quit"...
 
 ### Из domain в presentation
