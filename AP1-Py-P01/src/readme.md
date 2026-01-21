@@ -1,4 +1,4 @@
-# Rogue Remake (under construction - COMING SOON - DECEMBER 14, 2025)
+# Rogue Remake (under construction - COMING SOON)
 Ремейк классической ролевой игры 1980/83 года
 
 ## Архитектура проекта, слои:
